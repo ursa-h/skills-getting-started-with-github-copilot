@@ -23,7 +23,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 <div class="participants-list">
                     <h5>Current Participants:</h5>
                     <ul>
-                        ${details.participants.map(email => `<li>${email}</li>`).join('')}
+                        ${details.participants.map(email => `
+                            <li>
+                                <span class="participant-email">${email}</span>
+                                <button class="delete-btn" data-activity="${name}" data-email="${email}">×</button>
+                            </li>`).join('')}
                     </ul>
                 </div>
             `;
@@ -79,6 +83,40 @@ document.addEventListener("DOMContentLoaded", () => {
       messageDiv.className = "message error";
       messageDiv.textContent = "Error signing up for the activity. Please try again.";
       messageDiv.classList.remove("hidden");
+    }
+  });
+
+  // Handle unregistering participants
+  document.addEventListener("click", async (e) => {
+    if (e.target.classList.contains("delete-btn")) {
+      const activity = e.target.dataset.activity;
+      const email = e.target.dataset.email;
+      const messageDiv = document.getElementById("message");
+
+      try {
+        const response = await fetch(
+          `/activities/${encodeURIComponent(activity)}/unregister?email=${encodeURIComponent(email)}`,
+          {
+            method: "DELETE",
+          }
+        );
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.detail || "Unregister failed");
+        }
+
+        messageDiv.className = "message success";
+        messageDiv.textContent = "Successfully unregistered from the activity!";
+        messageDiv.classList.remove("hidden");
+
+        // Reload activities to show updated participants
+        loadActivities();
+      } catch (error) {
+        messageDiv.className = "message error";
+        messageDiv.textContent = "Error unregistering from the activity. Please try again.";
+        messageDiv.classList.remove("hidden");
+      }
     }
   });
 });
